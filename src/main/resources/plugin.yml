@@ -1,0 +1,5 @@
+name: MCPhysics
+version: 0.1
+description: o.o
+
+main: uk.thinkofdeath.minecraft.physics.PhysicsPlugin
