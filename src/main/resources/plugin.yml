@@ -1,5 +1,5 @@
 name: BlockPhysics
-version: 0.3
+version: 0.4
 description: o.o
 
 main: uk.thinkofdeath.minecraft.physics.PhysicsPlugin

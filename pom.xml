@@ -5,7 +5,7 @@
 
     <groupId>uk.thinkofdeath.minecraft</groupId>
     <artifactId>BlockPhysics</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.4-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
