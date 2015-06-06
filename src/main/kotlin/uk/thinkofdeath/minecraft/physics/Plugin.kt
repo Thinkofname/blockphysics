@@ -205,7 +205,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
                 it.kill()
             }
         })
-        blocks.removeIf({ !it.body.isActive() || it.stand.isDead() })
+        blocks.removeIf({ it.body.isDisposed() })
         visited.clear()
     }
 }
