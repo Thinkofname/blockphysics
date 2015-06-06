@@ -5,12 +5,19 @@
 
     <groupId>uk.thinkofdeath.minecraft</groupId>
     <artifactId>BlockPhysics</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>gdx-nightlies</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -25,9 +32,15 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>cz.advel.jbullet</groupId>
-            <artifactId>jbullet</artifactId>
-            <version>20101010-1</version>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx-bullet</artifactId>
+            <version>1.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.badlogicgames.gdx</groupId>
+            <artifactId>gdx-bullet-platform</artifactId>
+            <version>1.6.1</version>
+            <classifier>natives-desktop</classifier>
         </dependency>
     </dependencies>
 
@@ -69,13 +82,25 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <minimizeJar>true</minimizeJar>
+                            <filters>
+                                <filter>
+                                    <artifact>com.badlogicgames.gdx:gdx</artifact>
+                                    <includes>
+                                        <include>com/badlogic/gdx/utils/**</include>
+                                        <include>com/badlogic/gdx/math/**</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>**/*.i</exclude>
+                                        <exclude>**/*.cpp</exclude>
+                                        <exclude>**/*.h</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <relocations>
-                                <relocation>
-                                    <pattern>com.bulletphysics</pattern>
-                                    <shadedPattern>
-                                        uk.thinkofdeath.minecraft.physics.lib.bulletphysics
-                                    </shadedPattern>
-                                </relocation>
                                 <relocation>
                                     <pattern>kotlin</pattern>
                                     <shadedPattern>

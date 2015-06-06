@@ -14,18 +14,15 @@
 
 package uk.thinkofdeath.minecraft.physics
 
-import com.bulletphysics.collision.broadphase.DbvtBroadphase
-import com.bulletphysics.collision.dispatch.CollisionDispatcher
-import com.bulletphysics.collision.dispatch.CollisionFlags
-import com.bulletphysics.collision.dispatch.CollisionObject
-import com.bulletphysics.collision.dispatch.DefaultCollisionConfiguration
-import com.bulletphysics.collision.shapes.BoxShape
-import com.bulletphysics.dynamics.DiscreteDynamicsWorld
-import com.bulletphysics.dynamics.RigidBody
-import com.bulletphysics.dynamics.RigidBodyConstructionInfo
-import com.bulletphysics.dynamics.constraintsolver.SequentialImpulseConstraintSolver
-import com.bulletphysics.linearmath.DefaultMotionState
-import com.bulletphysics.linearmath.Transform
+import com.badlogic.gdx.math.Matrix4
+import com.badlogic.gdx.math.Quaternion
+import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.physics.bullet.Bullet
+import com.badlogic.gdx.physics.bullet.collision.*
+import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody
+import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver
+import com.badlogic.gdx.physics.bullet.linearmath.btDefaultMotionState
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.BlockState
@@ -38,30 +35,31 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.util.EulerAngle
 import java.util.concurrent.TimeUnit
-import javax.vecmath.Quat4f
-import javax.vecmath.Vector3f
 import org.bukkit.event.EventHandler as event
 
 class PhysicsPlugin : JavaPlugin(), Listener {
+    init {
+        Bullet.init()
+    }
 
-    var collisionConfig = DefaultCollisionConfiguration()
-    var dispatcher = CollisionDispatcher(collisionConfig)
-    var broadphase = DbvtBroadphase()
-    var solver = SequentialImpulseConstraintSolver()
-    var dynamicsWorld = DiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig)
+    var collisionConfig = btDefaultCollisionConfiguration()
+    var dispatcher = btCollisionDispatcher(collisionConfig)
+    var broadphase = btDbvtBroadphase()
+    var solver = btSequentialImpulseConstraintSolver()
+    var dynamicsWorld = btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig)
 
 
-    val boxCollision = BoxShape(Vector3f(.3f, .3f, .3f))
-    val boxInertia = Vector3f(0f, 0f, 0f);
-    val boxStaticCollision = BoxShape(Vector3f(1.0f, 1.0f, 1.0f))
-    val playerCollision = BoxShape(Vector3f(.15f, 0.9f, .15f))
+    val boxCollision = btBoxShape(Vector3(.3f, .3f, .3f))
+    val boxInertia = Vector3(0f, 0f, 0f);
+    val boxStaticCollision = btBoxShape(Vector3(1.0f, 1.0f, 1.0f))
+    val playerCollision = btBoxShape(Vector3(.15f, 0.9f, .15f))
     val blocks = arrayListOf<PBlock>()
 
-    val players = hashMapOf<Player, RigidBody>()
+    val players = hashMapOf<Player, btRigidBody>()
     var lastSim = System.nanoTime()
 
     public override fun onEnable() {
-        dynamicsWorld.setGravity(Vector3f(0f, -10f, 0f))
+        dynamicsWorld.setGravity(Vector3(0f, -10f, 0f))
 
         boxCollision.calculateLocalInertia(30f, boxInertia)
 
@@ -78,13 +76,13 @@ class PhysicsPlugin : JavaPlugin(), Listener {
         blocks.forEach {
             val l = it.stand.getLocation()
             if (loc.distanceSquared(l) < e.getYield() * e.getYield() * e.getYield()) {
-                val vec = Vector3f(
+                val vec = Vector3(
                         (loc.getX() - l.getX()).toFloat(),
                         (loc.getY() - l.getY()).toFloat(),
                         (loc.getZ() - l.getZ()).toFloat()
                 )
-                vec.normalize()
-                vec.scale(-e.getYield() * 50)
+                vec.nor()
+                vec.scl(-e.getYield() * 50)
                 it.body.setLinearVelocity(vec)
             }
         }
@@ -97,13 +95,13 @@ class PhysicsPlugin : JavaPlugin(), Listener {
             val l = it.getLocation().add(0.5,-0.5,0.5)
             val bl = PBlock(this, l, it.getState())
             blocks.add(bl)
-            val vec = Vector3f(
+            val vec = Vector3(
                     (loc.getX() - l.getX()).toFloat(),
                     (loc.getY() - l.getY()).toFloat(),
                     (loc.getZ() - l.getZ()).toFloat()
             )
-            vec.normalize()
-            vec.scale(-e.getYield() * 50)
+            vec.nor()
+            vec.scl(-e.getYield() * 50)
             bl.body.setLinearVelocity(vec)
             it.setType(Material.AIR)
             ite.remove()
@@ -112,17 +110,17 @@ class PhysicsPlugin : JavaPlugin(), Listener {
 
     event fun playerJoin(e: PlayerJoinEvent) {
         val loc = e.getPlayer().getLocation()
-        val transform = Transform()
-        transform.setIdentity()
-        transform.origin.set(
+        val transform = Matrix4()
+        transform.idt()
+        transform.setTranslation(
                 loc.getX().toFloat(),
                 loc.getY().toFloat() + 0.9f,
                 loc.getZ().toFloat()
         )
 
-        val motionState = DefaultMotionState(transform)
-        val info = RigidBodyConstructionInfo(0f, motionState, playerCollision, Vector3f(0f, 0f, 0f))
-        val body = RigidBody(info)
+        val motionState = btDefaultMotionState(transform)
+        val info = btRigidBody.btRigidBodyConstructionInfo(0f, motionState, playerCollision, Vector3(0f, 0f, 0f))
+        val body = btRigidBody(info)
         dynamicsWorld.addRigidBody(body)
         players[e.getPlayer()] = body
     }
@@ -131,7 +129,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
         dynamicsWorld.removeRigidBody(players.remove(e.getPlayer()))
     }
 
-    val pool = arrayListOf<RigidBody>()
+    val pool = arrayListOf<btRigidBody>()
     val visited = hashSetOf<Location>()
 
     fun stepSimulation() {
@@ -152,19 +150,19 @@ class PhysicsPlugin : JavaPlugin(), Listener {
                         }
                         visited.add(bloc)
 
-                        val transform = Transform()
-                        transform.setIdentity()
-                        transform.origin.set(
+                        val transform = Matrix4()
+                        transform.idt()
+                        transform.setTranslation(
                                 loc.getBlockX().toFloat() + .5f,
                                 loc.getBlockY().toFloat() + .5f,
                                 loc.getBlockZ().toFloat() + .5f
                         )
 
                         if (offset >= pool.size()) {
-                            val info = RigidBodyConstructionInfo(0f, null, boxStaticCollision, Vector3f(0f, 0f, 0f))
-                            val body = RigidBody(info)
+                            val info = btRigidBody.btRigidBodyConstructionInfo(0f, null, boxStaticCollision, Vector3(0f, 0f, 0f))
+                            val body = btRigidBody(info)
                             body.setActivationState(0)
-                            body.setCollisionFlags(body.getCollisionFlags() or CollisionFlags.STATIC_OBJECT)
+                            body.setCollisionFlags(body.getCollisionFlags() or btCollisionObject.CollisionFlags.CF_STATIC_OBJECT)
                             pool.add(body)
                         }
 
@@ -180,23 +178,21 @@ class PhysicsPlugin : JavaPlugin(), Listener {
             }
         }
         for (i in offset..pool.size() - 1) {
-            pool[i].setActivationState(CollisionObject.DISABLE_SIMULATION)
+            pool[i].setActivationState(CollisionConstants.DISABLE_SIMULATION)
         }
 
-        val t = Transform()
-        t.setIdentity()
         players.forEach {
             val body = it.getValue()
             val p = it.getKey()
             val loc = p.getLocation()
-            body.getCenterOfMassTransform(t)
-            t.origin.set(
+            val t = body.getCenterOfMassTransform()
+            t.setTranslation(
                     loc.getX().toFloat(),
                     loc.getY().toFloat() + 0.9f,
                     loc.getZ().toFloat()
             )
             body.setCenterOfMassTransform(t)
-            body.setActivationState(CollisionObject.ACTIVE_TAG)
+            body.setActivationState(CollisionConstants.ACTIVE_TAG)
         }
 
         val now = System.nanoTime()
@@ -217,8 +213,8 @@ class PhysicsPlugin : JavaPlugin(), Listener {
 class PBlock(val plugin: PhysicsPlugin, val location: Location, val block: BlockState) {
 
     val stand: ArmorStand
-    val body: RigidBody
-    val transform = Transform()
+    val body: btRigidBody
+    val transform = Matrix4()
     val drops = block.getBlock().getDrops();
     var life = 60f
 
@@ -230,33 +226,34 @@ class PBlock(val plugin: PhysicsPlugin, val location: Location, val block: Block
         stand.setHelmet(block.getData().toItemStack())
         stand.setVisible(false)
 
-        transform.setIdentity()
-        transform.origin.set(
+        transform.idt()
+        transform.setTranslation(
                 location.getX().toFloat(),
                 location.getY().toFloat() + 1.8f,
                 location.getZ().toFloat()
         )
 
-        val motionState = DefaultMotionState(transform)
-        val info = RigidBodyConstructionInfo(30f, motionState, plugin.boxCollision, plugin.boxInertia)
-        info.additionalDamping = true
-        body = RigidBody(info)
+        val motionState = btDefaultMotionState(transform)
+        val info = btRigidBody.btRigidBodyConstructionInfo(30f, motionState, plugin.boxCollision, plugin.boxInertia)
+        info.setAdditionalDamping(true)
+        body = btRigidBody(info)
+        info.dispose()
         plugin.dynamicsWorld.addRigidBody(body)
     }
 
     fun tick(delta: Float) {
         body.getMotionState().getWorldTransform(transform)
 
-        var rot = Quat4f()
+        var rot = Quaternion()
         transform.getRotation(rot)
         val eul = quatToEul(rot)
         stand.setHeadPose(eul)
 
 
-
-        location.setX(transform.origin.x.toDouble())
-        location.setY(transform.origin.y.toDouble() - 1.8f + 0.05f)
-        location.setZ(transform.origin.z.toDouble())
+        val origin = transform.getTranslation(Vector3())
+        location.setX(origin.x.toDouble())
+        location.setY(origin.y.toDouble() - 1.8f + 0.05f)
+        location.setZ(origin.z.toDouble())
 
         location.add(
                 -Math.sin(eul.getZ().toDouble()) * 0.15,
@@ -272,16 +269,20 @@ class PBlock(val plugin: PhysicsPlugin, val location: Location, val block: Block
     }
 
     fun kill() {
+        if (body.isDisposed()) {
+            return
+        }
         stand.remove()
         plugin.dynamicsWorld.removeRigidBody(body)
         val loc = stand.getLocation()
         drops.forEach {
             loc.getWorld().dropItemNaturally(loc, it)
         }
+        body.dispose()
     }
 }
 
-fun quatToEul(q: Quat4f): EulerAngle {
+fun quatToEul(q: Quaternion): EulerAngle {
     val sqw = q.w * q.w
     val sqx = q.x * q.x
     val sqy = q.y * q.y
