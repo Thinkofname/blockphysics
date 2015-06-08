@@ -245,15 +245,18 @@ class PBlock private constructor(val plugin: PhysicsPlugin, val location: Locati
     constructor(plugin : PhysicsPlugin, location : Location, block: BlockState) : this(plugin, location) {
         drops = block.getBlock().getDrops()
         headItem = block.getData().toItemStack()
+        stand.setHelmet(headItem)
     }
 
     constructor(plugin : PhysicsPlugin, location : Location, head : ItemStack) : this(plugin, location) {
         headItem = head
+        stand.setHelmet(headItem)
     }
 
     constructor(plugin : PhysicsPlugin, location : Location, head : ItemStack, drops : Collection<ItemStack>) : this(plugin, location) {
         headItem = head
         this.drops = drops
+        stand.setHelmet(headItem)
     }
 
     init {
