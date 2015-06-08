@@ -32,8 +32,12 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityExplodeEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.inventory.ItemStack
+import org.bukkit.material.MaterialData
+import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.util.EulerAngle
+import uk.thinkofdeath.minecraft.physics.api.PhysicsAPI
 import java.util.concurrent.TimeUnit
 import org.bukkit.event.EventHandler as event
 
@@ -80,6 +84,11 @@ class PhysicsPlugin : JavaPlugin(), Listener {
         blocks.forEach(PBlock::kill)
     }
 
+    public fun getAPI(owner : Plugin) : PhysicsAPI {
+        if (owner == this) throw IllegalArgumentException()
+        return PhysicsAPI(owner, this)
+    }
+
     event fun explode(e: EntityExplodeEvent) {
         if (!trackExplosions) return
         val loc = e.getLocation()
@@ -102,7 +111,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
             if (it.getType() == Material.TNT) {
                 continue
             }
-            val l = it.getLocation().add(0.5,-0.5,0.5)
+            val l = it.getLocation().add(0.5,0.5,0.5)
             val bl = PBlock(this, l, it.getState())
             blocks.add(bl)
             val vec = Vector3(
@@ -224,20 +233,36 @@ class PhysicsPlugin : JavaPlugin(), Listener {
     }
 }
 
-class PBlock(val plugin: PhysicsPlugin, val location: Location, val block: BlockState) {
+class PBlock private constructor(val plugin: PhysicsPlugin, val location: Location) {
 
     val stand: ArmorStand
     val body: btRigidBody
     val transform = Matrix4()
-    val drops = block.getBlock().getDrops();
+    var drops : Collection<ItemStack> = listOf()
+    var headItem : ItemStack = ItemStack(Material.STONE)
     var life = 60f
+
+    constructor(plugin : PhysicsPlugin, location : Location, block: BlockState) : this(plugin, location) {
+        drops = block.getBlock().getDrops()
+        headItem = block.getData().toItemStack()
+    }
+
+    constructor(plugin : PhysicsPlugin, location : Location, head : ItemStack) : this(plugin, location) {
+        headItem = head
+    }
+
+    constructor(plugin : PhysicsPlugin, location : Location, head : ItemStack, drops : Collection<ItemStack>) : this(plugin, location) {
+        headItem = head
+        this.drops = drops
+    }
 
     init {
         location.setYaw(0f)
         location.setPitch(0f)
+        location.subtract(0.0, -1.0, 0.0)
         stand = location.getWorld().spawn(location, javaClass<ArmorStand>())
         stand.setGravity(false)
-        stand.setHelmet(block.getData().toItemStack())
+        stand.setHelmet(headItem)
         stand.setVisible(false)
 
         transform.idt()
