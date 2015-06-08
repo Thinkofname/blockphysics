@@ -37,6 +37,10 @@ import org.bukkit.util.EulerAngle
 import java.util.concurrent.TimeUnit
 import org.bukkit.event.EventHandler as event
 
+val armorBlockSize = 0.625f
+val armorBlockSizeH = armorBlockSize / 2
+// .4375f
+
 class PhysicsPlugin : JavaPlugin(), Listener {
     init {
         Bullet.init()
@@ -49,7 +53,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
     var dynamicsWorld = btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig)
 
 
-    val boxCollision = btBoxShape(Vector3(.3f, .3f, .3f))
+    val boxCollision = btBoxShape(Vector3(armorBlockSizeH, armorBlockSizeH, armorBlockSizeH))
     val boxInertia = Vector3(0f, 0f, 0f);
     val boxStaticCollision = btBoxShape(Vector3(1.0f, 1.0f, 1.0f))
     val playerCollision = btBoxShape(Vector3(.15f, 0.9f, .15f))
@@ -144,7 +148,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
                     for (x in -2..2) {
                         val loc = it.location.clone().add(x.toDouble(), y.toDouble(), z.toDouble())
                         var b = loc.getBlock()
-                        var bloc = b.getLocation()
+                        var bloc = b.getLocation(loc)
                         if (b.getType() == Material.AIR || !b.getType().isOccluding() || visited.contains(bloc)) {
                             continue
                         }
@@ -256,9 +260,9 @@ class PBlock(val plugin: PhysicsPlugin, val location: Location, val block: Block
         location.setZ(origin.z.toDouble())
 
         location.add(
-                -Math.sin(eul.getZ().toDouble()) * 0.15,
-                -Math.cos(eul.getX().toDouble()) * 0.15 - Math.cos(eul.getZ().toDouble()) * 0.15,
-                -Math.sin(eul.getX().toDouble()) * 0.15
+                -Math.sin(eul.getZ().toDouble()) * (armorBlockSizeH/2),
+                -Math.cos(eul.getX().toDouble()) * (armorBlockSizeH/2) - Math.cos(eul.getZ().toDouble()) * (armorBlockSizeH/2),
+                -Math.sin(eul.getX().toDouble()) * (armorBlockSizeH/2)
         )
 
         life -= delta
