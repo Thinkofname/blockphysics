@@ -62,6 +62,8 @@ class PhysicsPlugin : JavaPlugin(), Listener {
     val players = hashMapOf<Player, btRigidBody>()
     var lastSim = System.nanoTime()
 
+    var trackExplosions = true
+
     public override fun onEnable() {
         dynamicsWorld.setGravity(Vector3(0f, -10f, 0f))
 
@@ -69,6 +71,9 @@ class PhysicsPlugin : JavaPlugin(), Listener {
 
         getServer().getScheduler().runTaskTimer(this, { stepSimulation() }, 0, 1)
         getServer().getPluginManager().registerEvents(this, this)
+        saveDefaultConfig()
+        val config = getConfig()
+        trackExplosions = config.getBoolean("explosions")
     }
 
     public override fun onDisable() {
@@ -76,6 +81,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
     }
 
     event fun explode(e: EntityExplodeEvent) {
+        if (!trackExplosions) return
         val loc = e.getLocation()
         blocks.forEach {
             val l = it.stand.getLocation()
