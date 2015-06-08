@@ -262,7 +262,7 @@ class PBlock private constructor(val plugin: PhysicsPlugin, val location: Locati
     init {
         location.setYaw(0f)
         location.setPitch(0f)
-        location.subtract(0.0, -1.0, 0.0)
+        location.subtract(0.0, -1.8, 0.0)
         stand = location.getWorld().spawn(location, javaClass<ArmorStand>())
         stand.setGravity(false)
         stand.setHelmet(headItem)
