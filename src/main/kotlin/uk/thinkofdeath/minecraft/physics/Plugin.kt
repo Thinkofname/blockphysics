@@ -203,13 +203,17 @@ class PhysicsPlugin : JavaPlugin(), Listener {
         val delta = (now - lastSim).toFloat() / TimeUnit.SECONDS.toNanos(1).toFloat()
         dynamicsWorld.stepSimulation(delta, 100)
         lastSim = now
-        blocks.forEach({ it.tick(delta) })
-        blocks.forEach({
+        val ite = blocks.iterator()
+        while (ite.hasNext()) {
+            val it = ite.next()
+            it.tick(delta)
             if (!it.body.isActive() || it.stand.isDead()) {
                 it.kill()
             }
-        })
-        blocks.removeIf({ it.body.isDisposed() })
+            if (it.body.isDisposed()) {
+                ite.remove()
+            }
+        }
         visited.clear()
     }
 }
