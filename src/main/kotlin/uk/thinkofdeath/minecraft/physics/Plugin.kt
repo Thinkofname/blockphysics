@@ -72,7 +72,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
         getServer().getScheduler().runTaskTimer(this, { stepSimulation() }, 0, 1)
         getServer().getPluginManager().registerEvents(this, this)
         saveDefaultConfig()
-        val config = getConfig();
+        val config = getConfig()
         trackExplosions = config.getBoolean("explosions")
     }
 
