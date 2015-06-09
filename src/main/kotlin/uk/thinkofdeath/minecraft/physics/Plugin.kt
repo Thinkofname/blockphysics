@@ -101,7 +101,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
                         (loc.getZ() - l.getZ()).toFloat()
                 )
                 vec.nor()
-                vec.scl(-e.getYield() * 50)
+                vec.scl(-e.getYield() * 30)
                 it.body.setLinearVelocity(vec)
             }
         }
@@ -120,7 +120,7 @@ class PhysicsPlugin : JavaPlugin(), Listener {
                     (loc.getZ() - l.getZ()).toFloat()
             )
             vec.nor()
-            vec.scl(-e.getYield() * 50)
+            vec.scl(-e.getYield() * 30)
             bl.body.setLinearVelocity(vec)
             it.setType(Material.AIR)
             ite.remove()
@@ -262,7 +262,7 @@ class PBlock private constructor(val plugin: PhysicsPlugin, val location: Locati
     init {
         location.setYaw(0f)
         location.setPitch(0f)
-        location.subtract(0.0, -1.8, 0.0)
+        location.add(0.0, -1.8, 0.0)
         stand = location.getWorld().spawn(location, javaClass<ArmorStand>())
         stand.setGravity(false)
         stand.setHelmet(headItem)
